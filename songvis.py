@@ -38,6 +38,24 @@ def run(**kwargs):
 def healthcheck():
     return {'status': 'OK'}
 
+@app.route('/vis', methods=['GET'])
+def songvis():
+    song_id = 23
+    # get song_id from $get
+
+    return flask.render_template('analysis.html', song_id=song_id)
+
+@app.route('/data', methods=['GET'])
+def data():
+
+    # get song_id from $get
+    try:
+        with open('example.json', 'r') as f:
+            D = json.load(f)
+            D['filename'] = os.path.basename(D['filename'])
+    except IOError:
+        D = {}
+    return json.encode(D)
 
 @app.route('/')
 def index():
@@ -47,7 +65,10 @@ def index():
 
 # Main block
 if __name__ == '__main__':
-    CFG = loadConfig(sys.argv[1])
+    if len(sys.argv) > 1:
+        CFG = loadConfig(sys.argv[1])
+    else:
+        CFG = loadConfig('server.ini')
 
     port = 5000
     if os.environ.get('ENV') == 'production':
