@@ -9,8 +9,6 @@ import ujson as json
 DEBUG = True
 SECRET_KEY = 'yodawg'
 
-HMM = None
-
 # construct application object
 app = flask.Flask(__name__)
 app.config.from_object(__name__)
