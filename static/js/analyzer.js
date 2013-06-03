@@ -30,6 +30,12 @@ function process_analysis(analysis) {
     // Plot the beat chart
     draw_beats(analysis['beats']);
 
+    // Plot the loudness chart
+    draw_line(analysis['loudness'], analysis['beats'], '#loudness');
+
+    // Plot the harmonicity chart
+    draw_line(analysis['harmonicity'], analysis['beats'], '#harmonicity');
+
     // Plot the pitches
     draw_heatmap(analysis['pitches'], analysis['beats'], '#pitches');
 
@@ -37,45 +43,116 @@ function process_analysis(analysis) {
 //     draw_heatmap(analysis['timbres'], analysis['beats'], '#timbres');
 }
 
-function draw_beats(beats) {
+function draw_beats(values) {
+    var margin  = {left: 60, right: 0, top: 0, bottom: 20},
+        width   = $('.plot').width()   - margin.left   - margin.right,
+        height  = $('.beats').height()  - margin.top    - margin.bottom;
 
-    var beat_times = [];
+    var beats = [];
 
-    for (var i = 1; i < beats.length; i++) {
-        beat_times.push({key: 'Beat ' + i,
-                         values: [{x: 0, y: beats[i] - beats[i-1]}]});
+    for (var i = 0; i < values.length - 1; i++) {
+        beats.push({beat: i, time: values[i], duration: values[i+1] - values[i]});
     }
 
-    nv.addGraph(function() {
-        var chart = nv.models.multiBarHorizontalChart();
+    var colors  = d3.scale.category20c().range().slice(0, 4);
 
-        chart.showControls(false)
-            .showLegend(false)
-            .stacked(true);
+    var x = d3.scale.linear()
+                .range([0, width]);
 
-        chart.xAxis.tickFormat(function() {return null;});
-        chart.yAxis.tickFormat(num_to_time);
-        chart.color(d3.scale.category20c().range().slice(0,4));
-        chart.tooltip(function(key, x, y, e, graph) {
-            return '<span class="label label-info">' + key + ': ' + d3.format('0.2f')(e['value']) + 's';
-        });
+    x.domain(d3.extent(values));
 
-        d3.select('#beats svg')
-            .datum(beat_times)
-            .call(chart);
+    var xAxis = d3.svg.axis()
+                    .scale(x)
+                    .orient('bottom')
+                    .tickFormat(num_to_time);
+
+    var y = d3.scale.ordinal()
+                .domain([0])
+                .rangeRoundBands([0, height], 0);
+
+
+    var svg     = d3.select("#beats svg")
+                    .append("g")
+                    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+    svg.append("g")
+      .attr("class", "x axis")
+      .attr("transform", "translate(0," + height + ")")
+      .call(xAxis);
+
+    svg.selectAll('.bar')
+        .data(beats)
+        .enter().append('rect')
+            .attr('class', 'bar')
+            .attr('x', function(d) { return x(d.time); })
+            .attr('y', function(d) { return y(0); })
+            .attr('width', function(d) { return x(d.duration) - x(0); })
+            .attr('height', function(d) { return y.rangeBand(); })
+            .attr('stroke', 'none')
+            .attr('fill', function(d) { return colors[d.beat % 4]; });
+}
+
+function draw_line(values, beats, target) {
     
-        nv.utils.windowResize(chart.update);
-    
-        return chart;
-    });
+    var margin  = {left: 60, right: 0, top: 20, bottom: 20},
+        width   = $('.plot').width() - margin.left - margin.right,
+        height  = $('.lines').height() - margin.top - margin.bottom;
+
+    var x = d3.scale.linear()
+                .range([0, width]);
+    var y = d3.scale.linear()
+                .range([height, 0]);
+
+    var xAxis = d3.svg.axis()
+                    .scale(x)
+                    .orient('bottom')
+                    .tickFormat(num_to_time);
+    var yAxis = d3.svg.axis()
+                    .scale(y)
+                    .orient('left')
+                    .ticks(5);
+
+    var my_values = [];
+    for (var i = 0; i < beats.length; i++) {
+        my_values.push({t: beats[i], v: values[i]});
+    }
+
+    var line = d3.svg.line()
+                .x(function(d) { return x(d.t); })
+                .y(function(d) { return y(d.v); });
+
+    var svg     = d3.select(target + " svg")
+                    .attr('width', width + margin.left + margin.right)
+                    .attr('height', height + margin.top + margin.bottom)
+                    .append('g')
+                    .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
+
+    x.domain(d3.extent(my_values, function(d) { return d.t; }));
+    y.domain(d3.extent(my_values, function(d) { return d.v; }));
+
+    svg.append('g')
+            .attr('class', 'x axis')
+            .attr('transform', 'translate(0, ' + height + ')')
+            .call(xAxis);
+
+    svg.append('g')
+            .attr('class', 'y axis')
+            .call(yAxis);
+
+    svg.append('path')
+            .datum(my_values)
+            .attr('class', 'line')
+            .attr('d', line);
 }
 
 function draw_heatmap(features, beats, target) {
 
+    var margin = {left: 60, top: 20, right: 0, bottom: 0};
     var n = features[0].length;
-    var H = 16;
-    var W = 4;
+    var H = ($('.heatmap').height() - margin.top)/ n;
+    var W = $('.plot').width() / d3.max(beats);
     var svg = d3.select(target + " svg");
+
 
     var offsets = []
     for (var i = 1; i < beats.length; i++) {
@@ -98,18 +175,18 @@ function draw_heatmap(features, beats, target) {
         return 'rgb(' + v.map(function(r){return Math.round(r * 256);}).join(',') + ')';
     }
 
-    var h_nodes = svg.append('g').attr('transform', 'transform(60, 0)');
+    var h_nodes = svg.append('g').attr('transform', 'transform(' + margin.left + ',' + margin.top + ')');
 
     h_nodes
         .selectAll('rect')
         .data(nodes)
         .enter().append('rect')
-            .attr('x', function(node) { return 60 + node.x * W; })
-            .attr('y', function(node) { return node.y * H; })
+            .attr('x', function(node) { return margin.left + node.x * W; })
+            .attr('y', function(node) { return margin.top + node.y * H; })
             .attr('width', function(node) {return node.w * W; })
             .attr('height', function(node) {return H;})
             .style('fill', function(node) { return rgb(1-node.value); })
-            .style('stroke', function(node) { return null; });
+            .style('stroke', 'none');
 
 }
 
