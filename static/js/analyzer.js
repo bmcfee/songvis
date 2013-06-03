@@ -1,3 +1,8 @@
+// Initialize tabs
+$(function() { 
+    $('.tabs').tab();
+});
+
 // Retrieve the analysis object
 $.ajax({
     url: "/data",
@@ -188,7 +193,8 @@ function draw_heatmap(features, beats, target, range) {
 
     var svg = d3.select(target + " svg");
 
-    var h_nodes = svg.append('g').attr('transform', 'transform(' + margin.left + ',' + margin.top + ')');
+    var h_nodes = svg.append('g')
+                    .attr('transform', 'transform(' + margin.left + ',' + margin.top + ')');
 
     h_nodes
         .selectAll('rect')
