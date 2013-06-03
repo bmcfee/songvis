@@ -40,7 +40,7 @@ function process_analysis(analysis) {
     draw_heatmap(analysis['pitches'], analysis['beats'], '#pitches');
 
     // Plot the timbres
-//     draw_heatmap(analysis['timbres'], analysis['beats'], '#timbres');
+    draw_heatmap(analysis['timbres'], analysis['beats'], '#timbres');
 }
 
 function draw_beats(values) {
@@ -84,12 +84,12 @@ function draw_beats(values) {
         .data(beats)
         .enter().append('rect')
             .attr('class', 'bar')
-            .attr('x', function(d) { return x(d.time); })
-            .attr('y', function(d) { return y(0); })
-            .attr('width', function(d) { return x(d.duration) - x(0); })
+            .attr('x',      function(d) { return x(d.time); })
+            .attr('y',      function(d) { return y(0); })
+            .attr('width',  function(d) { return x(d.duration) - x(0); })
             .attr('height', function(d) { return y.rangeBand(); })
-            .attr('stroke', 'none')
-            .attr('fill', function(d) { return colors[d.beat % 4]; });
+            .attr('fill',   function(d) { return colors[d.beat % 4]; })
+            .attr('stroke', 'none');
 }
 
 function draw_line(values, beats, target) {
@@ -145,6 +145,17 @@ function draw_line(values, beats, target) {
             .attr('d', line);
 }
 
+function flatten(X) {
+
+    var flat = []
+    for (var i = 0; i < X.length; i++) {
+        for (var j = 0; j < X[i].length; j++) {
+            flat.push(X[i][j]);
+        }
+    }
+    return flat;
+}
+
 function draw_heatmap(features, beats, target) {
 
     var margin = {left: 60, top: 20, right: 0, bottom: 0};
@@ -170,10 +181,10 @@ function draw_heatmap(features, beats, target) {
         }
     }
 
-    function rgb(z) {
-        var v = [z,z,z];
-        return 'rgb(' + v.map(function(r){return Math.round(r * 256);}).join(',') + ')';
-    }
+    var color = d3.scale.linear()
+        .domain(d3.extent(flatten(features)))
+        .range(["white", "steelblue"])
+        .interpolate(d3.interpolateLab);
 
     var h_nodes = svg.append('g').attr('transform', 'transform(' + margin.left + ',' + margin.top + ')');
 
@@ -185,7 +196,7 @@ function draw_heatmap(features, beats, target) {
             .attr('y', function(node) { return margin.top + node.y * H; })
             .attr('width', function(node) {return node.w * W; })
             .attr('height', function(node) {return H;})
-            .style('fill', function(node) { return rgb(1-node.value); })
+            .style('fill', function(node) { return color(node.value); })
             .style('stroke', 'none');
 
 }
