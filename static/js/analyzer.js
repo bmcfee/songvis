@@ -10,7 +10,7 @@ $.ajax({
     dataType: "json"
 }).done(process_analysis);
 
-var global_axes = []
+var brush_updates = []
 
 function num_to_time(x) {
     var mins = Math.floor(x / 60);
@@ -41,10 +41,16 @@ function process_analysis(analysis) {
     draw_beats(analysis['beats']);
 
     // Plot the loudness chart
-    draw_line(analysis['loudness'], analysis['beats'], '#loudness', [-80, 0.0]);
+    draw_line(analysis['loudness'], 
+                analysis['beats'], 
+                '#loudness',
+                [d3.min(analysis['loudness']), 0.0]);
 
     // Plot the harmonicity chart
-    draw_line(analysis['harmonicity'], analysis['beats'], '#harmonicity', [0.0, 1.0]);
+    draw_line(analysis['harmonicity'], 
+                analysis['beats'], 
+                '#harmonicity',
+                [d3.min(analysis['harmonicity']), 1.0]);
 
     // Plot the pitches
     draw_heatmap(analysis['pitches'], analysis['beats'], '#pitches', [0.0, 1.0]);
@@ -67,9 +73,8 @@ function draw_beats(values) {
     var colors  = d3.scale.category20c().range().slice(0, 4);
 
     var x = d3.scale.linear()
-                .range([0, width]);
-
-    x.domain(d3.extent(values));
+                .range([0, width])
+                .domain(d3.extent(values));
 
     var xAxis = d3.svg.axis()
                     .scale(x)
@@ -87,13 +92,25 @@ function draw_beats(values) {
 
     svg.append("g")
       .attr("class", "x axis")
-      .attr("transform", "translate(0," + height + ")")
-      .call(xAxis);
+      .attr("transform", "translate(0," + height + ")");
 
-    svg.selectAll('.bar')
-        .data(beats)
+    svg.append("defs").append("clipPath")
+        .attr("id", "clip")
+    .append("rect")
+        .attr("width", width)
+        .attr("height", height);
+
+    var zoomable = svg.selectAll('.bar')
+                        .data(beats)
+                        .attr("clip-path", "url(#clip)");
+
+    function update(domain) {
+        x.domain(domain);
+        svg.select('.x.axis').call(xAxis);
+
+    zoomable
         .enter().append('rect')
-            .attr('class', 'bar zoomable-data')
+            .attr('class', 'bar')
             .attr('x',      function(d) { return x(d.time); })
             .attr('y',      function(d) { return y(0); })
             .attr('width',  function(d) { return x(d.duration) - x(0); })
@@ -103,7 +120,10 @@ function draw_beats(values) {
         .append('svg:title')
             .text(function(d) {return 'Duration: ' + d3.format('.02f')(d.duration);});
 
-//     global_axes.push({x: x, xAxis: xAxis, fig: svg, data: beats});
+    }
+    update(d3.extent(values));
+
+    brush_updates.push(update);
 }
 
 function draw_zoom(signal, duration) {
@@ -159,10 +179,8 @@ function draw_zoom(signal, duration) {
         .on('brush', _brushed);
 
     function _brushed() {
-        global_axes.forEach(function(plot) { 
-            plot.x.domain(brush.empty() ? x.domain() : brush.extent()); 
-            plot.fig.select('.zoomable-data').attr('d', plot.data);
-            plot.fig.select('.x.axis').call(plot.xAxis);
+        brush_updates.forEach(function(update) { 
+            update(brush.empty() ? x.domain() : brush.extent());
         } );
     }
 
@@ -200,6 +218,7 @@ function draw_line(values, beats, target, range) {
     }
 
     var line = d3.svg.line()
+                .interpolate('monotone')
                 .x(function(d) { return x(d.t); })
                 .y(function(d) { return y(d.v); });
 
@@ -209,11 +228,9 @@ function draw_line(values, beats, target, range) {
                     .append('g')
                     .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
 
-    x.domain(d3.extent(my_values, function(d) { return d.t; }));
     svg.append('g')
             .attr('class', 'x axis')
-            .attr('transform', 'translate(0, ' + height + ')')
-            .call(xAxis);
+            .attr('transform', 'translate(0, ' + height + ')');
 
     range = range || d3.extent(my_values, function(d) { return d.v; });
     y.domain(range);
@@ -221,19 +238,24 @@ function draw_line(values, beats, target, range) {
             .attr('class', 'y axis')
             .call(yAxis);
 
-    svg.append("defs").append("clipPath")
-        .attr("id", "clip")
-    .append("rect")
-        .attr("width", width)
-        .attr("height", height);
+    svg.append("defs").append("clipPath").attr("id", "clip")
+        .append("rect")
+            .attr("width", width)
+            .attr("height", height);
 
-    svg.append('path')
+    var zoomable = svg.append('path')
             .datum(my_values)
             .attr("clip-path", "url(#clip)")
-            .attr('class', 'line zoomable-data')
-            .attr('d', line);
+            .attr('class', 'line zoomable-data');
 
-    global_axes.push({x: x, xAxis: xAxis, fig: svg, data: line});
+    function update(domain) {
+        x.domain(domain);
+        svg.select('.x.axis').call(xAxis);
+        zoomable.attr('d', line);
+    }
+    update(d3.extent(my_values, function(d) { return d.t; }));
+
+    brush_updates.push(update);
 }
 
 function flatten(X) {
@@ -249,7 +271,7 @@ function flatten(X) {
 
 function draw_heatmap(features, beats, target, range) {
 
-    var margin = {left: 60, top: 00, right: 0, bottom: 40};
+    var margin = {left: 60, top: 0, right: 0, bottom: 40};
     var width   = $('.plot').width() - margin.left - margin.right;
     var height  = $('.heatmap').height() - margin.top - margin.bottom;
 
@@ -307,7 +329,5 @@ function draw_heatmap(features, beats, target, range) {
             .attr('transform', 'translate(' + margin.left + ',' + (height + margin.top) + ')')
             .call(xAxis);
 
-//     global_axes.push(x);
-//     global_axes.push({x: x, xAxis: xAxis, fig: svg, data: nodes});
 }
 
