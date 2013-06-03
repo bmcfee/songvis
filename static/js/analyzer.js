@@ -31,13 +31,13 @@ function process_analysis(analysis) {
     draw_beats(analysis['beats']);
 
     // Plot the loudness chart
-    draw_line(analysis['loudness'], analysis['beats'], '#loudness');
+    draw_line(analysis['loudness'], analysis['beats'], '#loudness', [-80, 0.0]);
 
     // Plot the harmonicity chart
-    draw_line(analysis['harmonicity'], analysis['beats'], '#harmonicity');
+    draw_line(analysis['harmonicity'], analysis['beats'], '#harmonicity', [0.0, 1.0]);
 
     // Plot the pitches
-    draw_heatmap(analysis['pitches'], analysis['beats'], '#pitches');
+    draw_heatmap(analysis['pitches'], analysis['beats'], '#pitches', [0.0, 1.0]);
 
     // Plot the timbres
     draw_heatmap(analysis['timbres'], analysis['beats'], '#timbres');
@@ -92,21 +92,19 @@ function draw_beats(values) {
             .attr('stroke', 'none');
 }
 
-function draw_line(values, beats, target) {
+function draw_line(values, beats, target, range) {
     
     var margin  = {left: 60, right: 0, top: 20, bottom: 20},
         width   = $('.plot').width() - margin.left - margin.right,
         height  = $('.lines').height() - margin.top - margin.bottom;
 
-    var x = d3.scale.linear()
-                .range([0, width]);
-    var y = d3.scale.linear()
-                .range([height, 0]);
-
+    var x = d3.scale.linear().range([0, width]);
     var xAxis = d3.svg.axis()
                     .scale(x)
                     .orient('bottom')
                     .tickFormat(num_to_time);
+
+    var y = d3.scale.linear().range([height, 0]);
     var yAxis = d3.svg.axis()
                     .scale(y)
                     .orient('left')
@@ -128,13 +126,13 @@ function draw_line(values, beats, target) {
                     .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
 
     x.domain(d3.extent(my_values, function(d) { return d.t; }));
-    y.domain(d3.extent(my_values, function(d) { return d.v; }));
-
     svg.append('g')
             .attr('class', 'x axis')
             .attr('transform', 'translate(0, ' + height + ')')
             .call(xAxis);
 
+    range = range || d3.extent(my_values, function(d) { return d.v; });
+    y.domain(range);
     svg.append('g')
             .attr('class', 'y axis')
             .call(yAxis);
@@ -156,14 +154,14 @@ function flatten(X) {
     return flat;
 }
 
-function draw_heatmap(features, beats, target) {
+function draw_heatmap(features, beats, target, range) {
 
-    var margin = {left: 60, top: 20, right: 0, bottom: 0};
-    var n = features[0].length;
-    var H = ($('.heatmap').height() - margin.top)/ n;
-    var W = $('.plot').width() / d3.max(beats);
-    var svg = d3.select(target + " svg");
+    var margin = {left: 60, top: 20, right: 0, bottom: 20};
+    var width   = $('.plot').width() - margin.left - margin.right;
+    var height  = $('.heatmap').height() - margin.top - margin.bottom;
 
+    var H = height / features[0].length;
+    var W = width / d3.max(beats);
 
     var offsets = []
     for (var i = 1; i < beats.length; i++) {
@@ -181,10 +179,14 @@ function draw_heatmap(features, beats, target) {
         }
     }
 
+    range = range || d3.extent(flatten(features));
+
     var color = d3.scale.linear()
-        .domain(d3.extent(flatten(features)))
+        .domain(range)
         .range(["white", "steelblue"])
         .interpolate(d3.interpolateLab);
+
+    var svg = d3.select(target + " svg");
 
     var h_nodes = svg.append('g').attr('transform', 'transform(' + margin.left + ',' + margin.top + ')');
 
@@ -199,5 +201,16 @@ function draw_heatmap(features, beats, target) {
             .style('fill', function(node) { return color(node.value); })
             .style('stroke', 'none');
 
+    var x = d3.scale.linear().range([0, width]);
+    var xAxis = d3.svg.axis()
+                    .scale(x)
+                    .orient('bottom')
+                    .tickFormat(num_to_time);
+
+    x.domain(d3.extent(nodes, function(d) { return d.x; }));
+    svg.append('g')
+            .attr('class', 'x axis')
+            .attr('transform', 'translate(' + margin.left + ',' + (height + margin.top) + ')')
+            .call(xAxis);
 }
 
