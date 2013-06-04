@@ -1,0 +1,31 @@
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #eee;
+  shape-rendering: crispEdges;
+}
+
+.axis text{
+    fill: #eee;
+}
+
+
+.line {
+  fill: none;
+  stroke: steelblue;
+  stroke-width: 1.5px;
+}
+
+.brush .extent {
+  stroke: gray;
+  fill: steelblue;
+  fill-opacity: .25;
+  shape-rendering: crispEdges;
+}
+
+.plot       { width:    80%;     }
+.beats      { height:   32px;       }
+.lines      { height:   140px;      }
+.zoomwindow { height:   80px;       }
+.heatmap    { height:   160px;      }
+
