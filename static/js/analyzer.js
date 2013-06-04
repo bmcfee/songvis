@@ -208,15 +208,15 @@ function draw_zoom(signal, duration) {
       .attr("y", 0)
       .attr("height", height);
 
-    var marker = svg.append('line')
-                    .attr('y1', 0)
-                    .attr('y2', height)
-                    .attr('stroke', 'red');
+    var marker = svg.append('g');
+    
+    marker.append('line')
+                .attr('x1', 0).attr('x2', 0)
+                .attr('y1', 0).attr('y2', height)
+                .attr('stroke', 'red');
 
     function update(xpos) {
-        marker
-            .attr('x1', x(xpos))
-            .attr('x2', x(xpos));
+        marker.attr('transform', 'translate(' + x(xpos) + ',0)');
     }
     update(0);
     progress_updates.push(update);
