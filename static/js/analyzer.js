@@ -10,6 +10,7 @@ $.ajax({
     dataType: "json"
 }).done(process_analysis);
 
+// array container for brush updates
 var brush_updates = []
 
 function num_to_time(x) {
@@ -52,11 +53,12 @@ function process_analysis(analysis) {
                 '#harmonicity',
                 [d3.min(analysis['harmonicity']), 1.0]);
 
-    // Plot the pitches
-    draw_heatmap(analysis['pitches'], analysis['beats'], '#pitches', [0.0, 1.0]);
+    // Plot the chromagram
+    draw_heatmap(analysis['chroma'], analysis['beats'], '#chroma', [0.0, 1.0]);
 
-    // Plot the timbres
-    draw_heatmap(analysis['timbres'], analysis['beats'], '#timbres');
+
+    // Plot the spectrogram
+    draw_heatmap(analysis['spectrogram'], analysis['beats'], '#spectrogram');
 }
 
 function draw_beats(values) {
@@ -277,8 +279,6 @@ function draw_heatmap(features, beats, target, range) {
         width   = $('.plot').width() - margin.left - margin.right,
         height  = $('.heatmap').height() - margin.top - margin.bottom;
 
-    var W = width / d3.max(beats);
-
     var nodes = [];
     for (var i = 0; i < beats.length-1; i++) {
         for (var j = 0; j < features[i].length; j++) {
@@ -292,7 +292,7 @@ function draw_heatmap(features, beats, target, range) {
 
     var color = d3.scale.linear()
         .domain(range || d3.extent(flatten(features)))
-        .range(["white", "steelblue"])
+        .range(["steelblue", "white"])
         .interpolate(d3.interpolateLab);
 
     var x = d3.scale.linear().range([0, width]);
@@ -301,7 +301,7 @@ function draw_heatmap(features, beats, target, range) {
                     .orient('bottom')
                     .tickFormat(num_to_time);
 
-    var y = d3.scale.linear().range([0, height])
+    var y = d3.scale.linear().range([height, 0])
                 .domain([0, features[0].length]);
 
     var svg = d3.select(target + " svg")
@@ -319,7 +319,7 @@ function draw_heatmap(features, beats, target, range) {
                     .data(nodes)
                     .enter().append('rect')
                         .attr('y', function(node) { return y(node.y); })
-                        .attr('height', function(node) {return y(node.y + 1) - y(node.y);})
+                        .attr('height', function(node) {return Math.abs(y(node.y + 1) - y(node.y));})
                         .attr("clip-path", "url(#clip)")
                         .style('fill', function(node) { return color(node.value); })
                         .style('stroke', 'none');
