@@ -304,16 +304,9 @@ function draw_heatmap(features, beats, target, yAxis, range) {
         width   = $('.plot').width() - margin.left - margin.right,
         height  = $('.heatmap').height() - margin.top - margin.bottom;
 
-    var nodes = [];
-    for (var i = 0; i < beats.length-1; i++) {
-        for (var j = 0; j < features[i].length; j++) {
-            nodes.push({ 
-                x:      beats[i], 
-                w:      beats[i+1]-beats[i],
-                y:      j, 
-                value:  features[i][j]});
-        }
-    }
+    var extent = [0, beats[beats.length-1]];
+
+    var n_bins = features[0].length;
 
 
     var color = d3.scale.linear()
@@ -321,14 +314,15 @@ function draw_heatmap(features, beats, target, yAxis, range) {
         .range([$('body').css('background'), 'white'])
         .interpolate(d3.interpolateLab);
 
-    var x = d3.scale.linear().range([0, width]);
+    var x = d3.scale.linear().range([0, width]).domain(extent);
     var xAxis = d3.svg.axis()
                     .scale(x)
                     .orient('bottom')
                     .tickFormat(num_to_time);
 
-    var y = d3.scale.linear().range([height, 0])
-                .domain([0, features[0].length]);
+    var y = d3.scale.linear()
+                .range([height, 0])
+                .domain([0, n_bins]);
 
     var svg = d3.select(target + " svg")
                     .attr('width', width + margin.left + margin.right)
@@ -341,16 +335,6 @@ function draw_heatmap(features, beats, target, yAxis, range) {
             .attr("width", width)
             .attr("height", height);
 
-    var zoomers = svg.append('g').attr('clip-path', 'url(#clip)')
-                    .selectAll('rect')
-                        .data(nodes)
-                    .enter().append('rect')
-                        .attr('y', function(node) { return y(node.y); })
-                        .attr('height', function(node) {return Math.abs(y(node.y + 1) - y(node.y));})
-                        .style('fill', function(node) { return color(node.value); })
-                        .style('stroke', function(node) { return color(node.value); });
-
-
     svg.append('g')
             .attr('class', 'x axis')
             .attr('transform', 'translate(0,' + (height + margin.top) + ')');
@@ -361,14 +345,37 @@ function draw_heatmap(features, beats, target, yAxis, range) {
             .call(yAxis);
     }
 
+    var nodes = [];
+    var zoomers = svg.append('g').attr('clip-path', 'url(#clip)');
+
+    for (var i = 0; i < beats.length-1; i++) {
+
+        var my_data = {x: beats[i], width: beats[i+1] - beats[i], values: features[i]};
+        var beat_stack = zoomers.append('g').datum(my_data)
+                            .attr('class', 'heatmap-bar')
+                            .attr('transform', 'translate(' + x(my_data.x) + ', 0) scale(1, 1)');
+
+        for (var j = 0; j < n_bins; j++) {
+            beat_stack.append('rect')
+                    .attr('x', 0)
+                    .attr('width', x(my_data.width))
+                    .attr('y', y(j))
+                    .attr('height', Math.abs(y(1) - y(0)))
+                    .style('fill', color(features[i][j]))
+                    .style('stroke', color(features[i][j]));
+        }
+
+    }
+
     function update(domain) {
+        var scale = (extent[1] - extent[0]) / (domain[1] - domain[0]);
+
         x.domain(domain);
         svg.select('.x.axis').call(xAxis);
-        zoomers
-            .attr('x', function(node) { return x(node.x); })
-            .attr('width', function(node) {return x(node.x + node.w) - x(node.x); })
+        zoomers.selectAll('.heatmap-bar')
+                .attr('transform', function(d) { return 'translate(' + x(d.x) + ', 0) scale(' + scale + ',1)'; } );
     }
-    update([0, d3.max(nodes, function(d) { return d.x + d.w; })]);
+    update(extent);
 
     brush_updates.push(update);
 }
