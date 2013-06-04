@@ -11,6 +11,15 @@ $.ajax({
 
 // array container for brush updates
 var brush_updates = []
+var progress_updates = []
+
+function track_progress(time) {
+
+    progress_updates.forEach(function(update) {
+        update(time);
+    });
+
+}
 
 function num_to_time(x) {
     var mins = Math.floor(x / 60);
@@ -88,7 +97,6 @@ function draw_beats(values) {
                 .domain([0])
                 .rangeRoundBands([0, height], 0);
 
-
     var svg     = d3.select("#beats svg")
                     .attr('width', width + margin.left + margin.right)
                     .attr('height', height + margin.top + margin.bottom)
@@ -132,6 +140,7 @@ function draw_beats(values) {
     update(d3.extent(values));
 
     brush_updates.push(update);
+
 }
 
 function draw_zoom(signal, duration) {
@@ -196,9 +205,21 @@ function draw_zoom(signal, duration) {
       .attr("class", "x brush")
       .call(brush)
     .selectAll("rect")
-      .attr("y", -6)
-      .attr("height", height + 7);
+      .attr("y", 0)
+      .attr("height", height);
 
+    var marker = svg.append('line')
+                    .attr('y1', 0)
+                    .attr('y2', height)
+                    .attr('stroke', 'red');
+
+    function update(xpos) {
+        marker
+            .attr('x1', x(xpos))
+            .attr('x2', x(xpos));
+    }
+    update(0);
+    progress_updates.push(update);
 }
 
 function draw_line(values, beats, target, range) {
