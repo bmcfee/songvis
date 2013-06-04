@@ -5,8 +5,7 @@ $(function() {
 
 // Retrieve the analysis object
 $.ajax({
-    url: "/data",
-    data: {song_id: $("#song_id").val()},
+    url: "/data/" + $("#song_id").val(),
     dataType: "json"
 }).done(process_analysis);
 
