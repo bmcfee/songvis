@@ -104,7 +104,6 @@ function draw_beats(values) {
 
     var zoomable = svg.selectAll('.bar')
                         .data(beats)
-                        .attr("clip-path", "url(#clip)")
                         .enter().append('rect')
                         .attr('class', 'bar')
             .attr('y',      function(d) { return y(0); })
@@ -163,7 +162,7 @@ function draw_zoom(signal, duration) {
     var svg  = d3.select("#signal svg")
                 .attr('width', width + margin.left + margin.right)
                 .attr('height', height + margin.top + margin.bottom)
-            .append('g')
+                .append('g')
                 .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
     
     svg.append('g')
@@ -249,7 +248,7 @@ function draw_line(values, beats, target, range) {
     var zoomable = svg.append('path')
             .datum(my_values)
             .attr("clip-path", "url(#clip)")
-            .attr('class', 'line zoomable-data');
+            .attr('class', 'line');
 
     function update(domain) {
         x.domain(domain);
@@ -274,51 +273,27 @@ function flatten(X) {
 
 function draw_heatmap(features, beats, target, range) {
 
-    var margin = {left: 60, top: 0, right: 0, bottom: 40};
-    var width   = $('.plot').width() - margin.left - margin.right;
-    var height  = $('.heatmap').height() - margin.top - margin.bottom;
+    var margin = {left: 60, top: 0, right: 0, bottom: 40},
+        width   = $('.plot').width() - margin.left - margin.right,
+        height  = $('.heatmap').height() - margin.top - margin.bottom;
 
-    var H = height / features[0].length;
     var W = width / d3.max(beats);
 
-    var offsets = []
-    for (var i = 1; i < beats.length; i++) {
-        offsets.push(beats[i] - beats[i-1]);
-    }
-
     var nodes = [];
-    for (var i = 0; i < offsets.length; i++) {
+    for (var i = 0; i < beats.length-1; i++) {
         for (var j = 0; j < features[i].length; j++) {
             nodes.push({ 
                 x:      beats[i], 
-                w:      offsets[i],
+                w:      beats[i+1]-beats[i],
                 y:      j, 
                 value:  features[i][j]});
         }
     }
 
-    range = range || d3.extent(flatten(features));
-
     var color = d3.scale.linear()
-        .domain(range)
+        .domain(range || d3.extent(flatten(features)))
         .range(["white", "steelblue"])
         .interpolate(d3.interpolateLab);
-
-    var svg = d3.select(target + " svg");
-
-    var h_nodes = svg.append('g')
-                    .attr('transform', 'transform(' + margin.left + ',' + margin.top + ')');
-
-    h_nodes
-        .selectAll('rect')
-        .data(nodes)
-        .enter().append('rect')
-            .attr('x', function(node) { return margin.left + node.x * W; })
-            .attr('y', function(node) { return margin.top + node.y * H; })
-            .attr('width', function(node) {return node.w * W; })
-            .attr('height', function(node) {return H;})
-            .style('fill', function(node) { return color(node.value); })
-            .style('stroke', 'none');
 
     var x = d3.scale.linear().range([0, width]);
     var xAxis = d3.svg.axis()
@@ -326,11 +301,43 @@ function draw_heatmap(features, beats, target, range) {
                     .orient('bottom')
                     .tickFormat(num_to_time);
 
-    x.domain(d3.extent(nodes, function(d) { return d.x; }));
+    var y = d3.scale.linear().range([0, height])
+                .domain([0, features[0].length]);
+
+    var svg = d3.select(target + " svg")
+                    .attr('width', width + margin.left + margin.right)
+                    .attr('height', height + margin.top + margin.bottom)
+                    .append('g')
+                    .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
+
+    svg.append("defs").append("clipPath").attr("id", "clip")
+        .append("rect")
+            .attr("width", width)
+            .attr("height", height);
+
+    var zoomers = svg.selectAll('rect')
+                    .data(nodes)
+                    .enter().append('rect')
+                        .attr('y', function(node) { return y(node.y); })
+                        .attr('height', function(node) {return y(node.y + 1) - y(node.y);})
+                        .attr("clip-path", "url(#clip)")
+                        .style('fill', function(node) { return color(node.value); })
+                        .style('stroke', 'none');
+
+
     svg.append('g')
             .attr('class', 'x axis')
-            .attr('transform', 'translate(' + margin.left + ',' + (height + margin.top) + ')')
-            .call(xAxis);
+            .attr('transform', 'translate(' + margin.left + ',' + (height + margin.top) + ')');
 
+    function update(domain) {
+        x.domain(domain);
+        svg.select('.x.axis').call(xAxis);
+        zoomers
+            .attr('x', function(node) { return x(node.x); })
+            .attr('width', function(node) {return x(node.x + node.w) - x(node.x); })
+    }
+    update([0, d3.max(nodes, function(d) { return d.x + d.w; })]);
+
+    brush_updates.push(update);
 }
 
