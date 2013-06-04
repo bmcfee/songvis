@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Song-visualizer</title>
+        <link   rel="stylesheet"
+                href="/static/bootstrap/css/cyborg-bootstrap.min.css">
+        <link   rel="stylesheet"
+                href="/static/css/analyzer.css">
+    </head>
+
+    <body>
+        <div class="navbar navbar-inverse">
+            <div class="navbar-inner">
+            <ul class="nav">
+                <li class="brand"><span id="song_name"></span></li>
+                <li class="divider-vertical"></li>
+                <li class="navbar-text">Duration: <span id="duration"></span></li>
+                <li class="divider-vertical"></li>
+                <li class="navbar-text">Tempo: <span id="tempo"></span></li>
+                <li class="divider-vertical"></li>
+                <li class="nav-header">
+                    <audio controls 
+                        src="/audio/{{ song_id }}" 
+                        preload="none"
+                        ontimeupdate="track_progress(this.currentTime);">
+                    </audio>
+                </li>
+            </ul>
+
+            <ul class="nav nav-tabs pull-right">
+                <li class="active">
+                    <a href="#overview" data-toggle="tab">Overview</a>
+                </li>
+                <li>
+                    <a href="#spectrum" data-toggle="tab">Spectrum</a>
+                </li>
+                <li>
+                    <a href="#structure" data-toggle="tab">Structure</a>
+                </li>
+            </ul>
+            </div>
+        </div>
+
+        <!-- content visualization goes here -->
+        <dl class="dl-horizontal row">
+            <dt> Waveform </dt>
+            <dd id="signal" class="plot zoomwindow">
+                <svg></svg>
+            </dd>
+        </dl>
+
+        <div class="tab-content">
+        
+            <div id="overview" class="tab-pane active">
+                <dl class="dl-horizontal row">
+                    <dt> Beats </dt>
+                    <dd id="beats" class="plot beats">
+                        <svg></svg>
+                    </dd>
+    
+                    <dt> Loudness </dt>
+                    <dd id="loudness" class="plot lines">
+                        <svg></svg>
+                    </dd>
+    
+                    <dt> Harmonicity </dt>
+                    <dd id="harmonicity" class="plot lines">
+                        <svg></svg>
+                    </dd>
+                </dl>
+            </div>
+
+            <div id="spectrum" class="tab-pane">
+                <dl class="dl-horizontal row">
+                    <dt> Spectrogram </dt>
+                    <dd id="spectrogram" class="plot heatmap">
+                        <svg></svg>
+                    </dd>
+
+                    <dt> Chroma </dt>
+                    <dd id="chroma" class="plot heatmap">
+                        <svg></svg>
+                    </dd>
+        
+                </dl>
+            </div>
+
+            <div id="structure" class="tab-pane">
+                <dl class="dl-horizontal row">
+                    <dt> Structure </dt>
+                    <dd class="plot">
+                        <svg></svg>
+                    </dd>
+                </dl>
+            </div>
+
+        </div>
+
+        <input type="hidden" id="song_id" value="{{ song_id }}" />
+    </body>
+
+    <script type="text/javascript" src="/static/js/jquery-1.10.1.min.js"></script>
+    <script type="text/javascript" src="/static/js/d3.v3.min.js"></script>
+    <script type="text/javascript" src="/static/bootstrap/js/bootstrap-tab.js"></script>
+
+    <script type="text/javascript" src="/static/js/colorbrewer.js"></script>
+    <script type="text/javascript" src="/static/js/analyzer.js"></script>
+
+</html>
