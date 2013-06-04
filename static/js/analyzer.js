@@ -53,7 +53,7 @@ function process_analysis(analysis) {
                 [d3.min(analysis['harmonicity']), 1.0]);
 
     // Plot the chromagram
-    draw_heatmap(analysis['chroma'], analysis['beats'], '#chroma');//, [0.0, 1.0]);
+    draw_heatmap(analysis['chroma'], analysis['beats'], '#chroma');
 
 
     // Plot the spectrogram
@@ -104,6 +104,9 @@ function draw_beats(values) {
         .append("rect")
             .attr("width", width)
             .attr("height", height);
+
+    //     TODO:   2013-06-04 12:16:31 by Brian McFee <brm2132@columbia.edu>
+    // make a column-level bar group and move that instead of each bar separately 
 
     var zoomable = svg.append('g').attr('clip-path', 'url(#clip)')
                     .selectAll('.bar')
@@ -274,7 +277,7 @@ function flatten(X) {
     return flat;
 }
 
-function draw_heatmap(features, beats, target, range) {
+function draw_heatmap(features, beats, target, yAxis, range) {
 
     var margin = {left: 60, top: 0, right: 0, bottom: 40},
         width   = $('.plot').width() - margin.left - margin.right,
@@ -294,7 +297,7 @@ function draw_heatmap(features, beats, target, range) {
 
     var color = d3.scale.linear()
         .domain(range || d3.extent(flatten(features)))
-        .range(['steelblue', 'white'])
+        .range([$('body').css('background'), 'white'])
         .interpolate(d3.interpolateLab);
 
     var x = d3.scale.linear().range([0, width]);
@@ -330,6 +333,12 @@ function draw_heatmap(features, beats, target, range) {
     svg.append('g')
             .attr('class', 'x axis')
             .attr('transform', 'translate(0,' + (height + margin.top) + ')');
+
+    if (yAxis) {
+        svg.append('g')
+            .attr('class', 'y axis')
+            .call(yAxis);
+    }
 
     function update(domain) {
         x.domain(domain);
