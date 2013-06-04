@@ -113,9 +113,6 @@ function draw_beats(values) {
             .attr("width", width)
             .attr("height", height);
 
-    //     TODO:   2013-06-04 12:16:31 by Brian McFee <brm2132@columbia.edu>
-    // make a column-level bar group and move that instead of each bar separately 
-
     var zoomable = svg.append('g').attr('clip-path', 'url(#clip)')
                     .selectAll('.bar')
                         .data(beats)
