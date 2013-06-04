@@ -87,6 +87,8 @@ function draw_beats(values) {
 
 
     var svg     = d3.select("#beats svg")
+                    .attr('width', width + margin.left + margin.right)
+                    .attr('height', height + margin.top + margin.bottom)
                     .append("g")
                     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
@@ -94,31 +96,32 @@ function draw_beats(values) {
       .attr("class", "x axis")
       .attr("transform", "translate(0," + height + ")");
 
-    svg.append("defs").append("clipPath")
-        .attr("id", "clip")
-    .append("rect")
-        .attr("width", width)
-        .attr("height", height);
+
+    svg.append("defs").append("clipPath").attr("id", "clip")
+        .append("rect")
+            .attr("width", width)
+            .attr("height", height);
 
     var zoomable = svg.selectAll('.bar')
                         .data(beats)
-                        .attr("clip-path", "url(#clip)");
+                        .attr("clip-path", "url(#clip)")
+                        .enter().append('rect')
+                        .attr('class', 'bar')
+            .attr('y',      function(d) { return y(0); })
+            .attr('height', function(d) { return y.rangeBand(); })
+            .attr('fill',   function(d) { return colors[d.beat % 4]; })
+            .attr('stroke', 'none')
+            .attr("clip-path", "url(#clip)")
+        .append('svg:title')
+            .text(function(d) {return 'Duration: ' + d3.format('.02f')(d.duration);});
 
     function update(domain) {
         x.domain(domain);
         svg.select('.x.axis').call(xAxis);
 
-    zoomable
-        .enter().append('rect')
-            .attr('class', 'bar')
+        svg.selectAll('.bar')
             .attr('x',      function(d) { return x(d.time); })
-            .attr('y',      function(d) { return y(0); })
-            .attr('width',  function(d) { return x(d.duration) - x(0); })
-            .attr('height', function(d) { return y.rangeBand(); })
-            .attr('fill',   function(d) { return colors[d.beat % 4]; })
-            .attr('stroke', 'none')
-        .append('svg:title')
-            .text(function(d) {return 'Duration: ' + d3.format('.02f')(d.duration);});
+            .attr('width',  function(d) { return x(d.duration) - x(0); });
 
     }
     update(d3.extent(values));
@@ -217,6 +220,8 @@ function draw_line(values, beats, target, range) {
         my_values.push({t: beats[i], v: values[i]});
     }
 
+    y.domain( range || d3.extent(my_values, function(d) { return d.v; }));
+
     var line = d3.svg.line()
                 .interpolate('monotone')
                 .x(function(d) { return x(d.t); })
@@ -232,8 +237,6 @@ function draw_line(values, beats, target, range) {
             .attr('class', 'x axis')
             .attr('transform', 'translate(0, ' + height + ')');
 
-    range = range || d3.extent(my_values, function(d) { return d.v; });
-    y.domain(range);
     svg.append('g')
             .attr('class', 'y axis')
             .call(yAxis);
