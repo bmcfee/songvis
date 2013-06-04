@@ -113,7 +113,7 @@ function draw_beats(values) {
                         .attr('fill',   function(d) { return colors[d.beat % 4]; })
                         .attr('stroke', 'none')
                     .append('svg:title')
-                        .text(function(d) {return 'Duration: ' + d3.format('.02f')(d.duration);});
+                        .text(function(d) {return 'Beat duration: ' + d3.format('.02f')(d.duration) + 's';});
 
     function update(domain) {
         x.domain(domain);
@@ -326,7 +326,7 @@ function draw_heatmap(features, beats, target, range) {
 
     svg.append('g')
             .attr('class', 'x axis')
-            .attr('transform', 'translate(' + margin.left + ',' + (height + margin.top) + ')');
+            .attr('transform', 'translate(0,' + (height + margin.top) + ')');
 
     function update(domain) {
         x.domain(domain);
