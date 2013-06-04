@@ -53,7 +53,7 @@ function process_analysis(analysis) {
                 [d3.min(analysis['harmonicity']), 1.0]);
 
     // Plot the chromagram
-    draw_heatmap(analysis['chroma'], analysis['beats'], '#chroma', [0.0, 1.0]);
+    draw_heatmap(analysis['chroma'], analysis['beats'], '#chroma');//, [0.0, 1.0]);
 
 
     // Plot the spectrogram
@@ -71,7 +71,9 @@ function draw_beats(values) {
         beats.push({beat: i, time: values[i], duration: values[i+1] - values[i]});
     }
 
-    var colors  = d3.scale.category20c().range().slice(0, 4);
+    var colors = d3.scale.ordinal()
+                    .domain(d3.range(0, 4))
+                    .range(colorbrewer.PuBu[4]);
 
     var x = d3.scale.linear()
                 .range([0, width])
@@ -110,7 +112,7 @@ function draw_beats(values) {
                         .attr('class', 'bar')
                         .attr('y',      function(d) { return y(0); })
                         .attr('height', function(d) { return y.rangeBand(); })
-                        .attr('fill',   function(d) { return colors[d.beat % 4]; })
+                        .attr('fill',   function(d) { return colors(d.beat % 4); })
                         .attr('stroke', 'none')
                     .append('svg:title')
                         .text(function(d) {return 'Beat duration: ' + d3.format('.02f')(d.duration) + 's';});
@@ -289,9 +291,10 @@ function draw_heatmap(features, beats, target, range) {
         }
     }
 
+
     var color = d3.scale.linear()
         .domain(range || d3.extent(flatten(features)))
-        .range(["steelblue", "white"])
+        .range(['steelblue', 'white'])
         .interpolate(d3.interpolateLab);
 
     var x = d3.scale.linear().range([0, width]);
@@ -321,7 +324,7 @@ function draw_heatmap(features, beats, target, range) {
                         .attr('y', function(node) { return y(node.y); })
                         .attr('height', function(node) {return Math.abs(y(node.y + 1) - y(node.y));})
                         .style('fill', function(node) { return color(node.value); })
-                        .style('stroke', 'none');
+                        .style('stroke', function(node) { return color(node.value); });
 
 
     svg.append('g')
