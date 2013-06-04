@@ -6,7 +6,7 @@ import sys
 import os
 import ujson as json
 
-DEBUG = True
+debug = True
 SECRET_KEY = 'yodawg'
 
 # construct application object
@@ -72,5 +72,5 @@ if __name__ == '__main__':
     if os.environ.get('ENV') == 'production':
         port = 80
 
-    run(host='0.0.0.0', port=port)
+    run(host='0.0.0.0', port=port, debug=True)
 

@@ -104,17 +104,17 @@ function draw_beats(values) {
             .attr("width", width)
             .attr("height", height);
 
-    var zoomable = svg.selectAll('.bar')
+    var zoomable = svg.append('g').attr('clip-path', 'url(#clip)')
+                    .selectAll('.bar')
                         .data(beats)
-                        .enter().append('rect')
+                    .enter().append('rect')
                         .attr('class', 'bar')
-            .attr('y',      function(d) { return y(0); })
-            .attr('height', function(d) { return y.rangeBand(); })
-            .attr('fill',   function(d) { return colors[d.beat % 4]; })
-            .attr('stroke', 'none')
-            .attr("clip-path", "url(#clip)")
-        .append('svg:title')
-            .text(function(d) {return 'Duration: ' + d3.format('.02f')(d.duration);});
+                        .attr('y',      function(d) { return y(0); })
+                        .attr('height', function(d) { return y.rangeBand(); })
+                        .attr('fill',   function(d) { return colors[d.beat % 4]; })
+                        .attr('stroke', 'none')
+                    .append('svg:title')
+                        .text(function(d) {return 'Duration: ' + d3.format('.02f')(d.duration);});
 
     function update(domain) {
         x.domain(domain);
@@ -315,12 +315,12 @@ function draw_heatmap(features, beats, target, range) {
             .attr("width", width)
             .attr("height", height);
 
-    var zoomers = svg.selectAll('rect')
-                    .data(nodes)
+    var zoomers = svg.append('g').attr('clip-path', 'url(#clip)')
+                    .selectAll('rect')
+                        .data(nodes)
                     .enter().append('rect')
                         .attr('y', function(node) { return y(node.y); })
                         .attr('height', function(node) {return Math.abs(y(node.y + 1) - y(node.y));})
-                        .attr("clip-path", "url(#clip)")
                         .style('fill', function(node) { return color(node.value); })
                         .style('stroke', 'none');
 
