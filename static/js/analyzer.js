@@ -395,15 +395,15 @@ function draw_heatmap(features, beats, target, yAxis, range) {
 
 function draw_structure(beats, beat_links, segments, target) {
 
-    var margin = {left: 0, right: 0, top: 0, bottom: 0};
+    var margin = {left: 60, right: 0, top: 0, bottom: 0};
     var diameter = $('#structplot').width() - margin.left - margin.right;
 
     var radius = diameter / 2;
     var radius_i = radius - 24;
 
     var svg = d3.select(target).append('svg')
-                    .attr("width", diameter)
-                    .attr("height", diameter)
+                    .attr("width", diameter + margin.left + margin.right)
+                    .attr("height", diameter + margin.top + margin.bottom)
                 .append('g')
                     .attr(  'transform', 
                             'translate(' + (radius + margin.left) + ',' + (radius + margin.top) + ')');
