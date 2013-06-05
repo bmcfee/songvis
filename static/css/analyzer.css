@@ -21,7 +21,7 @@
 }
 
 .node {
-  font: 10px sans-serif;
+  font: 10px fixed;
   color: black;
 }
 
@@ -43,4 +43,4 @@
 .lines      { height:   140px;      }
 .zoomwindow { height:   80px;       }
 .heatmap    { height:   160px;      }
-.structplot { width:    480px;      }
+.structplot { width:    512px;      }

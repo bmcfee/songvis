@@ -418,7 +418,7 @@ function draw_structure(beats, beat_links, segments, target) {
         var map = {};
         function new_node(name) {
             if (! map[name]) {
-                map[name] = {name: name, children: [], key: name};
+                map[name] = {name: name, children: [], key: name, label: null};
             }
         }
 
@@ -437,7 +437,10 @@ function draw_structure(beats, beat_links, segments, target) {
                 var beat_name = 'beat_' + b;
                 
                 new_node(beat_name);
-                map[beat_name].parent = map[node_name];
+                map[beat_name].parent   = map[node_name];
+                map[beat_name].label    = num_to_time(beats[b]);
+                map[beat_name].segment  = i;
+
                 map[node_name].children.push(map[beat_name]);
             });
         }
@@ -478,17 +481,29 @@ function draw_structure(beats, beat_links, segments, target) {
             .attr("class", "link")
             .attr("d", line);
 
-    svg.selectAll(".node")
-            .data(nodes.filter(function(n) { return !n.children; }))
-        .enter().append("g")
-            .attr("class", "node")
-            .attr("transform", function(d) { return "rotate(" + (d.x - 90) + ")translate(" + d.y + ")"; })
-        .append("text")
-            .attr("dx", function(d) { return d.x < 180 ? 8 : -8; })
-            .attr("dy", ".31em")
-            .attr("text-anchor", function(d) { return d.x < 180 ? "start" : "end"; })
-            .attr("transform", function(d) { return d.x < 180 ? null : "rotate(180)"; })
-            .text(function(d) { return d.key; });
+    var arcs = svg.append('g');
+
+    var colors = d3.scale.category20();
+
+    for (var i = 0; i < segments.length; i++) {
+        // get the extent
+        var angles = nodes.filter(function(n) { return n.segment == i; }).map(function(n) {
+            return n.x;
+        });
+
+        var segment_arc = d3.svg.arc()
+                    .startAngle(angles[0]/ 180 * Math.PI)
+                    .endAngle(angles[angles.length-1] / 180 * Math.PI)
+                    .innerRadius(radius_i)
+                    .outerRadius(radius_i + 16);
+                    
+        console.log(angles[0] + ' -> ' + angles[angles.length-1]);
+
+        arcs.append('path')
+            .attr('d', segment_arc)
+            .style('stroke', 'none')
+            .style('fill', colors(i));
+    }
 
     var x = d3.scale.linear()
                 .domain([0, beats[beats.length-1]])
