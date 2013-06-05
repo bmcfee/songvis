@@ -254,6 +254,8 @@ function draw_line(values, beats, target, range) {
     for (var i = 0; i < values.length; i++) {
         my_values.push({t: beats[i], v: values[i]});
     }
+    // dupe the last value to span the full range
+    my_values.push({t: beats[beats.length-1], v: values[values.length-1]});
 
     y.domain( range || d3.extent(my_values, function(d) { return d.v; }));
 
@@ -291,7 +293,7 @@ function draw_line(values, beats, target, range) {
         svg.select('.x.axis').call(xAxis);
         zoomable.attr('d', line);
     }
-    update(d3.extent(my_values, function(d) { return d.t; }));
+    update(d3.extent(beats)); 
 
     brush_updates.push(update);
 }
