@@ -35,6 +35,7 @@ function process_analysis(analysis) {
     if (analysis['beats'][0] > 0) {
         analysis['beats'].unshift(0.0);
     }
+    analysis['beats'].push(analysis['duration']);
 
     // Header info
     $("#song_name")
@@ -250,7 +251,7 @@ function draw_line(values, beats, target, range) {
                     .ticks(5);
 
     var my_values = [];
-    for (var i = 0; i < beats.length; i++) {
+    for (var i = 0; i < values.length; i++) {
         my_values.push({t: beats[i], v: values[i]});
     }
 
@@ -396,7 +397,7 @@ function draw_structure(beats, beat_links, segments, target) {
     var diameter = $('#structplot').width() - margin.left - margin.right;
 
     var radius = diameter / 2;
-    var radius_i = radius * 0.8;
+    var radius_i = radius - 24;
 
     var svg = d3.select(target).append('svg')
                     .attr("width", diameter)
@@ -497,8 +498,6 @@ function draw_structure(beats, beat_links, segments, target) {
                     .innerRadius(radius_i)
                     .outerRadius(radius_i + 16);
                     
-        console.log(angles[0] + ' -> ' + angles[angles.length-1]);
-
         arcs.append('path')
             .attr('d', segment_arc)
             .style('stroke', 'none')
@@ -509,6 +508,7 @@ function draw_structure(beats, beat_links, segments, target) {
                 .domain([0, beats[beats.length-1]])
                 .range([0, 360]);
 
+    // time -> beat -> angle
     var marker = svg.append('g');
     marker.append('line')
                 .attr('x1', 0).attr('x2', 0)
