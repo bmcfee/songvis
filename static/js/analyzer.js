@@ -421,7 +421,7 @@ function draw_structure(beats, beat_links, segments, target) {
         var map = {};
         function new_node(name) {
             if (! map[name]) {
-                map[name] = {name: name, children: [], key: name, label: null};
+                map[name] = {name: name, children: [], key: name, leaf: false};
             }
         }
 
@@ -441,8 +441,10 @@ function draw_structure(beats, beat_links, segments, target) {
                 
                 new_node(beat_name);
                 map[beat_name].parent   = map[node_name];
-                map[beat_name].label    = num_to_time(beats[b]);
                 map[beat_name].segment  = i;
+                map[beat_name].time     = beats[b];
+                map[beat_name].beat_num = b;
+                map[beat_name].leaf     = true;
 
                 map[node_name].children.push(map[beat_name]);
             });
@@ -506,12 +508,16 @@ function draw_structure(beats, beat_links, segments, target) {
             .style('fill', colors(i));
     }
 
-    var x = d3.scale.linear()
-                .domain([0, beats[beats.length-1]])
-                .range([0, 360]);
-
-    //     TODO:   2013-06-05 09:51:14 by Brian McFee <brm2132@columbia.edu>
     // time -> beat -> angle
+
+    var beat_to_angle = nodes.filter(function(n) { return n.leaf; }).map(function(n) {
+        return {beat_time: n.time, angle: n.x};
+    });
+
+    var time_to_angle = d3.scale.linear()
+                            .domain(beat_to_angle.map(function(b) { return b.beat_time; }))
+                            .range(beat_to_angle.map(function(b) { return b.angle; }));
+
     var marker = svg.append('g');
     marker.append('line')
                 .attr('x1', 0).attr('x2', 0)
@@ -519,7 +525,7 @@ function draw_structure(beats, beat_links, segments, target) {
                 .attr('class', 'marker');
 
     function update(xpos) {
-        marker.attr('transform', 'rotate(' + x(xpos) + ')');
+        marker.attr('transform', 'rotate(' + time_to_angle(xpos) + ')');
     }
     update(0);
     progress_updates.push(update);
