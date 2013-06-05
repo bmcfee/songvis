@@ -13,14 +13,14 @@ $.ajax({
 var brush_updates = []
 var progress_updates = []
 
+// Update position for audio widget
 function track_progress(time) {
-
     progress_updates.forEach(function(update) {
         update(time);
     });
-
 }
 
+// Minute:second string formatter
 function num_to_time(x) {
     var mins = Math.floor(x / 60);
     var secs = Math.round(x % 60);
@@ -28,6 +28,7 @@ function num_to_time(x) {
     return d3.format('2d')(mins) + ':' + d3.format('02d')(secs);
 }
 
+// Render the analysis widgets
 function process_analysis(analysis) {
 
     // Push a phantom beat at 0
@@ -67,7 +68,14 @@ function process_analysis(analysis) {
 
     // Plot the spectrogram
     draw_heatmap(analysis['spectrogram'], analysis['beats'], '#spectrogram');
+
+    // Draw the structure bundle
+    // TODO:   2013-06-04 19:20:33 by Brian McFee <brm2132@columbia.edu>
+    // needs higher-level bundling structure for this to work
+
+    draw_structure(analysis['beats'], analysis['links'], analysis['segments'], '#structplot');
 }
+
 
 function draw_beats(values) {
     var margin  = {left: 60, right: 0, top: 0, bottom: 20},
@@ -97,7 +105,8 @@ function draw_beats(values) {
                 .domain([0])
                 .rangeRoundBands([0, height], 0);
 
-    var svg     = d3.select("#beats svg")
+    var svg     = d3.select("#beats")
+                    .append('svg')
                     .attr('width', width + margin.left + margin.right)
                     .attr('height', height + margin.top + margin.bottom)
                     .append("g")
@@ -123,7 +132,9 @@ function draw_beats(values) {
                         .attr('fill',   function(d) { return colors(d.beat % 4); })
                         .attr('stroke', 'none')
                     .append('svg:title')
-                        .text(function(d) {return 'Beat duration: ' + d3.format('.02f')(d.duration) + 's';});
+                        .text(function(d) {
+                            return 'Beat duration: ' + d3.format('.02f')(d.duration) + 's';
+                        });
 
     function update(domain) {
         x.domain(domain);
@@ -171,7 +182,7 @@ function draw_zoom(signal, duration) {
                 .x(function(d) { return x(d.t); })
                 .y(function(d) { return y(d.v); });
 
-    var svg  = d3.select("#signal svg")
+    var svg  = d3.select("#signal").append('svg')
                 .attr('width', width + margin.left + margin.right)
                 .attr('height', height + margin.top + margin.bottom)
                 .append('g')
@@ -210,7 +221,7 @@ function draw_zoom(signal, duration) {
     marker.append('line')
                 .attr('x1', 0).attr('x2', 0)
                 .attr('y1', 0).attr('y2', height)
-                .attr('stroke', 'red');
+                .attr('class', 'marker');
 
     function update(xpos) {
         marker.attr('transform', 'translate(' + x(xpos) + ',0)');
@@ -250,7 +261,7 @@ function draw_line(values, beats, target, range) {
                 .x(function(d) { return x(d.t); })
                 .y(function(d) { return y(d.v); });
 
-    var svg     = d3.select(target + " svg")
+    var svg     = d3.select(target).append('svg')
                     .attr('width', width + margin.left + margin.right)
                     .attr('height', height + margin.top + margin.bottom)
                     .append('g')
@@ -308,7 +319,7 @@ function draw_heatmap(features, beats, target, yAxis, range) {
 
     var color = d3.scale.linear()
         .domain(range || d3.extent(flatten(features)))
-        .range([$('body').css('background'), 'white'])
+        .range([$('body').css('background'), $('body').css('color')])
         .interpolate(d3.interpolateLab);
 
     var x = d3.scale.linear().range([0, width]).domain(extent);
@@ -321,7 +332,7 @@ function draw_heatmap(features, beats, target, yAxis, range) {
                 .range([height, 0])
                 .domain([0, n_bins]);
 
-    var svg = d3.select(target + " svg")
+    var svg = d3.select(target).append('svg')
                     .attr('width', width + margin.left + margin.right)
                     .attr('height', height + margin.top + margin.bottom)
                     .append('g')
@@ -370,10 +381,129 @@ function draw_heatmap(features, beats, target, yAxis, range) {
         x.domain(domain);
         svg.select('.x.axis').call(xAxis);
         zoomers.selectAll('.heatmap-bar')
-                .attr('transform', function(d) { return 'translate(' + x(d.x) + ', 0) scale(' + scale + ',1)'; } );
+                .attr('transform', function(d) { 
+                    return 'translate(' + x(d.x) + ', 0) scale(' + scale + ',1)'; 
+                } );
     }
     update(extent);
 
     brush_updates.push(update);
+}
+
+function draw_structure(beats, beat_links, segments, target) {
+
+    var margin = {left: 0, right: 0, top: 0, bottom: 0};
+    var diameter = $('#structplot').width() - margin.left - margin.right;
+
+    var radius = diameter / 2;
+    var radius_i = radius * 0.8;
+
+    var svg = d3.select(target).append('svg')
+                    .attr("width", diameter)
+                    .attr("height", diameter)
+                .append('g')
+                    .attr(  'transform', 
+                            'translate(' + (radius + margin.left) + ',' + (radius + margin.top) + ')');
+
+    var cluster = d3.layout.cluster()
+                    .size([360, radius_i])
+                    .sort(null)
+                    .value(function(d) { return d.size; });
+    
+    var bundle  = d3.layout.bundle();
+                    
+    // Build the nodes: root -> segments -> beats
+
+    function build_nodes() {
+        var map = {};
+        function new_node(name) {
+            if (! map[name]) {
+                map[name] = {name: name, children: [], key: name};
+            }
+        }
+
+        // push the root
+        new_node('');
+
+        // push each segment
+        for (var i = 0; i < segments.length; i++) {
+            var node_name = 'segment_' + i
+
+            new_node(node_name);
+            map[node_name].parent = map[''];
+            map[''].children.push(map[node_name])
+
+            d3.range(segments[i], segments[i+1] || beats.length).forEach(function(b) {
+                var beat_name = 'beat_' + b;
+                
+                new_node(beat_name);
+                map[beat_name].parent = map[node_name];
+                map[node_name].children.push(map[beat_name]);
+            });
+        }
+        return map[''];
+    }
+    function build_links(nodes) {
+        var map = {}, links = [];
+
+        // map nodes by name
+        nodes.forEach(function(b) {
+            map[b.name] = b;
+        });
+
+        // build the links
+        for (var i = 0; i < beat_links.length; i++) {
+            var source_name = 'beat_' + i;
+
+            beat_links[i].forEach(function (target) {
+                var target_name = 'beat_' + target;
+                links.push({source: map[source_name], target: map[target_name]});
+            });
+        }
+        return links;
+    }
+
+    var nodes = cluster.nodes(build_nodes());
+    var links = build_links(nodes);
+
+    var line    = d3.svg.line.radial()
+                    .interpolate('bundle')
+                    .tension(.85)
+                    .radius(function(d) { return d.y; })
+                    .angle(function(d) { return d.x / 180 * Math.PI; });
+
+    svg.selectAll(".link")
+            .data(bundle(links))
+        .enter().append("path")
+            .attr("class", "link")
+            .attr("d", line);
+
+    svg.selectAll(".node")
+            .data(nodes.filter(function(n) { return !n.children; }))
+        .enter().append("g")
+            .attr("class", "node")
+            .attr("transform", function(d) { return "rotate(" + (d.x - 90) + ")translate(" + d.y + ")"; })
+        .append("text")
+            .attr("dx", function(d) { return d.x < 180 ? 8 : -8; })
+            .attr("dy", ".31em")
+            .attr("text-anchor", function(d) { return d.x < 180 ? "start" : "end"; })
+            .attr("transform", function(d) { return d.x < 180 ? null : "rotate(180)"; })
+            .text(function(d) { return d.key; });
+
+    var x = d3.scale.linear()
+                .domain([0, beats[beats.length-1]])
+                .range([0, 360]);
+
+    var marker = svg.append('g');
+    marker.append('line')
+                .attr('x1', 0).attr('x2', 0)
+                .attr('y1', -radius_i).attr('y2', 0)
+                .attr('class', 'marker');
+
+    function update(xpos) {
+        marker.attr('transform', 'rotate(' + x(xpos) + ')');
+    }
+    update(0);
+    progress_updates.push(update);
 }
 

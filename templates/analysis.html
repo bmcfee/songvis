@@ -4,7 +4,7 @@
         <meta charset="utf-8">
         <title>Song-visualizer</title>
         <link   rel="stylesheet"
-                href="/static/bootstrap/css/cyborg-bootstrap.min.css">
+                href="/static/bootstrap/css/cosmo-bootstrap.min.css">
         <link   rel="stylesheet"
                 href="/static/css/analyzer.css">
     </head>
@@ -45,9 +45,7 @@
         <!-- content visualization goes here -->
         <dl class="dl-horizontal row">
             <dt> Waveform </dt>
-            <dd id="signal" class="plot zoomwindow">
-                <svg></svg>
-            </dd>
+            <dd id="signal" class="plot zoomwindow" />
         </dl>
 
         <div class="tab-content">
@@ -55,33 +53,23 @@
             <div id="overview" class="tab-pane active">
                 <dl class="dl-horizontal row">
                     <dt> Beats </dt>
-                    <dd id="beats" class="plot beats">
-                        <svg></svg>
-                    </dd>
+                    <dd id="beats" class="plot beats" />
     
                     <dt> Loudness </dt>
-                    <dd id="loudness" class="plot lines">
-                        <svg></svg>
-                    </dd>
+                    <dd id="loudness" class="plot lines" />
     
                     <dt> Harmonicity </dt>
-                    <dd id="harmonicity" class="plot lines">
-                        <svg></svg>
-                    </dd>
+                    <dd id="harmonicity" class="plot lines" />
                 </dl>
             </div>
 
             <div id="spectrum" class="tab-pane">
                 <dl class="dl-horizontal row">
                     <dt> Spectrogram </dt>
-                    <dd id="spectrogram" class="plot heatmap">
-                        <svg></svg>
-                    </dd>
+                    <dd id="spectrogram" class="plot heatmap" />
 
                     <dt> Chroma </dt>
-                    <dd id="chroma" class="plot heatmap">
-                        <svg></svg>
-                    </dd>
+                    <dd id="chroma" class="plot heatmap" />
         
                 </dl>
             </div>
@@ -89,9 +77,7 @@
             <div id="structure" class="tab-pane">
                 <dl class="dl-horizontal row">
                     <dt> Structure </dt>
-                    <dd class="plot">
-                        <svg></svg>
-                    </dd>
+                    <dd id="structplot" class="structplot" />
                 </dl>
             </div>
 
