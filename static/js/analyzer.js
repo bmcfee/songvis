@@ -510,6 +510,7 @@ function draw_structure(beats, beat_links, segments, target) {
                 .domain([0, beats[beats.length-1]])
                 .range([0, 360]);
 
+    //     TODO:   2013-06-05 09:51:14 by Brian McFee <brm2132@columbia.edu>
     // time -> beat -> angle
     var marker = svg.append('g');
     marker.append('line')
