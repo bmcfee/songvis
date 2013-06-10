@@ -150,7 +150,7 @@ function draw_beats(values) {
     brush_updates.push(update);
 
     var time_to_beat    = d3.scale.quantize()
-                                .domain([0, d3.max(values) ])
+                                .domain(beats.map(function(d) { return d.time; }))
                                 .range(beats);
 
     var marker = zoomable.append('rect')
@@ -346,6 +346,7 @@ function draw_heatmap(features, beats, target, yAxis, range) {
         .interpolate(d3.interpolateLab);
 
     var x = d3.scale.linear().range([0, width]).domain(extent);
+
     var xAxis = d3.svg.axis()
                     .scale(x)
                     .orient('bottom')
@@ -382,7 +383,7 @@ function draw_heatmap(features, beats, target, yAxis, range) {
 
     for (var i = 0; i < beats.length-1; i++) {
 
-        var my_data = {x: beats[i], width: beats[i+1] - beats[i], values: features[i]};
+        var my_data = {x: beats[i], width: x(beats[i+1] - beats[i]), values: features[i]};
         cols.push(my_data);
 
         var beat_stack = zoomers.append('g').datum(my_data)
@@ -392,7 +393,7 @@ function draw_heatmap(features, beats, target, yAxis, range) {
         for (var j = 0; j < n_bins; j++) {
             beat_stack.append('rect')
                     .attr('x', 0)
-                    .attr('width', x(my_data.width))
+                    .attr('width', my_data.width)
                     .attr('y', y(j + 1))
                     .attr('height', Math.abs(y(1) - y(0)))
                     .style('fill', color(features[i][j]))
@@ -416,10 +417,11 @@ function draw_heatmap(features, beats, target, yAxis, range) {
     brush_updates.push(update);
 
     var time_to_column = d3.scale.quantize()
-                            .domain(beats)
+                            .domain(beats.slice(0, beats.length-1))
                             .range(cols);
 
     var marker = zoomers.append('rect')
+                    .attr('class', 'heatmap-bar')
                     .attr('x', 0)
                     .attr('y', 0)
                     .attr('height', d3.max(y.range()))
@@ -433,11 +435,11 @@ function draw_heatmap(features, beats, target, yAxis, range) {
         var b = time_to_column(xpos);
 
         marker.datum(b);
-        marker.attr('x', x(b.x));
-        marker.attr('width', x(b.x + b.width) - x(b.x));
+        marker.attr('transform', 'translate(' + x(b.x) + ',0) scale(' + scale + ',1)')
+            .attr('width', b.width);
     }
-//     update_marker(0);
-//     progress_updates.push(update_marker);
+    update_marker(0);
+    progress_updates.push(update_marker);
 }
 
 function draw_structure(beats, beat_links, segments, target) {
