@@ -378,10 +378,13 @@ function draw_heatmap(features, beats, target, yAxis, range) {
 
     var nodes = [];
     var zoomers = svg.append('g').attr('clip-path', 'url(#clip)');
+    var cols = []
 
     for (var i = 0; i < beats.length-1; i++) {
 
         var my_data = {x: beats[i], width: beats[i+1] - beats[i], values: features[i]};
+        cols.push(my_data);
+
         var beat_stack = zoomers.append('g').datum(my_data)
                             .attr('class', 'heatmap-bar')
                             .attr('transform', 'translate(' + x(my_data.x) + ', 0) scale(1, 1)');
@@ -390,7 +393,7 @@ function draw_heatmap(features, beats, target, yAxis, range) {
             beat_stack.append('rect')
                     .attr('x', 0)
                     .attr('width', x(my_data.width))
-                    .attr('y', y(j))
+                    .attr('y', y(j + 1))
                     .attr('height', Math.abs(y(1) - y(0)))
                     .style('fill', color(features[i][j]))
                     .style('stroke', color(features[i][j]));
@@ -411,6 +414,30 @@ function draw_heatmap(features, beats, target, yAxis, range) {
     update(extent);
 
     brush_updates.push(update);
+
+    var time_to_column = d3.scale.quantize()
+                            .domain(beats)
+                            .range(cols);
+
+    var marker = zoomers.append('rect')
+                    .attr('x', 0)
+                    .attr('y', 0)
+                    .attr('height', d3.max(y.range()))
+                    .style('fill', 'red')
+                    .style('fill-opacity', '0.25')
+                    .style('stroke', 'none');
+
+    function update_marker(xpos) {
+        var scale = (extent[1] - extent[0]) / (x.domain()[1] - x.domain()[0]);
+
+        var b = time_to_column(xpos);
+
+        marker.datum(b);
+        marker.attr('x', x(b.x));
+        marker.attr('width', x(b.x + b.width) - x(b.x));
+    }
+//     update_marker(0);
+//     progress_updates.push(update_marker);
 }
 
 function draw_structure(beats, beat_links, segments, target) {
