@@ -71,8 +71,6 @@ function process_analysis(analysis) {
     draw_heatmap(analysis['spectrogram'], analysis['beats'], '#spectrogram');
 
     // Draw the structure bundle
-    // TODO:   2013-06-04 19:20:33 by Brian McFee <brm2132@columbia.edu>
-    // needs higher-level bundling structure for this to work
 
     draw_structure(analysis['beats'], analysis['links'], analysis['segments'], '#structplot');
 }
@@ -123,19 +121,20 @@ function draw_beats(values) {
             .attr("width", width)
             .attr("height", height);
 
-    var zoomable = svg.append('g').attr('clip-path', 'url(#clip)')
-                    .selectAll('.bar')
-                        .data(beats)
-                    .enter().append('rect')
-                        .attr('class', 'bar')
-                        .attr('y',      function(d) { return y(0); })
-                        .attr('height', function(d) { return y.rangeBand(); })
-                        .attr('fill',   function(d) { return colors(d.beat % 4); })
-                        .attr('stroke', 'none')
-                    .append('svg:title')
-                        .text(function(d) {
-                            return 'Beat duration: ' + d3.format('.02f')(d.duration) + 's';
-                        });
+    var zoomable = svg.append('g').attr('clip-path', 'url(#clip)');
+    
+    zoomable.selectAll('.bar')
+                .data(beats)
+            .enter().append('rect')
+                .attr('class', 'bar')
+                .attr('y',      function(d) { return y(0); })
+                .attr('height', function(d) { return y.rangeBand(); })
+                .attr('fill',   function(d) { return colors(d.beat % 4); })
+                .attr('stroke', 'none')
+            .append('svg:title')
+                .text(function(d) {
+                    return 'Beat duration: ' + d3.format('.02f')(d.duration) + 's';
+                });
 
     function update(domain) {
         x.domain(domain);
@@ -150,6 +149,27 @@ function draw_beats(values) {
 
     brush_updates.push(update);
 
+    var time_to_beat    = d3.scale.quantize()
+                                .domain([0, d3.max(values) ])
+                                .range(beats);
+
+    var marker = zoomable.append('rect')
+                    .datum(time_to_beat(0))
+                    .attr('class', 'bar')
+                    .attr('y', y(0))
+                    .attr('height', y.rangeBand())
+                    .attr('fill', 'red')
+                    .attr('stroke', 'red')
+                    .attr('fill-opacity', '0.25');
+
+    function update_marker(xpos) {
+        var b = time_to_beat(xpos);
+        marker.datum(b);
+        marker.attr('x', x(b.time));    // get the position and width of the current beat
+        marker.attr('width', x(b.duration) - x(0));
+    }
+    update_marker(0);
+    progress_updates.push(update_marker);
 }
 
 function draw_zoom(signal, duration) {
