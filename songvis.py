@@ -36,6 +36,7 @@ def run(**kwargs):
 def healthcheck():
     return {'status': 'OK'}
 
+@app.route('/vis', defaults={'song_id': 0})
 @app.route('/vis/<int:song_id>')
 def songvis(song_id):
     # get song_id from $get
