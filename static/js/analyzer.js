@@ -38,13 +38,14 @@ function process_analysis(analysis) {
     analysis['beats'].push(analysis['duration']);
 
     // Header info
-    $("#song_name")
-        .text(analysis['filename']);
-    $("#duration")
-        .text(num_to_time(analysis['duration']));
+//     $("#song_name")
+//         .text(analysis['filename']);
+//     $("#duration")
+//         .text(num_to_time(analysis['duration']));
     $("#tempo")
         .text(analysis['tempo'].toFixed(2) + ' BPM');
 
+    draw_meta( analysis['metadata'] );
 
     draw_zoom( analysis['signal'], analysis['duration']);
 
@@ -75,6 +76,23 @@ function process_analysis(analysis) {
     draw_structure(analysis['beats'], analysis['links'], analysis['segments'], '#structplot');
 }
 
+function draw_meta(values) {
+
+    var title   = 'n/a';
+    var artist  = 'n/a';
+    var album   = 'n/a';
+    var date    = 'n/a';
+
+    if (values['title'])    {  title = values['title'][0];      }
+    if (values['artist'])   {  artist = values['artist'][0];    }
+    if (values['album'])    {  album = values['album'][0];      }
+    if (values['date'])     {  date = values['date'][0];        }
+
+    $("#track_title").text(title);
+    $("#track_artist").text(artist);
+    $("#track_album").text(album);
+    $("#track_date").text(date);
+}
 
 function draw_beats(values) {
     var margin  = {left: 60, right: 0, top: 0, bottom: 20},

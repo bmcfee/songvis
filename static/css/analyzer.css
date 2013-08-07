@@ -38,6 +38,8 @@
   shape-rendering: crispEdges;
 }
 
+/* body { padding-bottom: 70px; } */
+
 .plot       { width:    80%;        }
 .beats      { height:   32px;       }
 .lines      { height:   140px;      }

@@ -4,31 +4,22 @@
         <meta charset="utf-8">
         <title>Song-visualizer</title>
         <link   rel="stylesheet"
-                href="/static/bootstrap/css/cosmo-bootstrap.min.css">
+                href="/static/bootstrap/css/bootstrap.min.css">
         <link   rel="stylesheet"
                 href="/static/css/analyzer.css">
     </head>
 
     <body>
-        <div class="navbar navbar-inverse">
-            <div class="navbar-inner">
-            <ul class="nav">
-                <li class="brand"><span id="song_name"></span></li>
-                <li class="divider-vertical" />
-                <li class="navbar-text">Duration: <span id="duration"></span></li>
-                <li class="divider-vertical" />
-                <li class="navbar-text">Tempo: <span id="tempo"></span></li>
-                <li class="divider-vertical" />
-                <li class="nav-header">
-                    <audio controls 
-                        src="/audio/{{ song_id }}" 
+        <div class="navbar-inner">
+            <ul class="nav nav-tabs">
+                <li class="pull-right" style="padding-top: 6px; padding-right: 6px;">
+                    <audio controls
+                        src="/audio/{{ song_id }}"
                         preload="none"
                         ontimeupdate="track_progress(this.currentTime);">
                     </audio>
                 </li>
-            </ul>
 
-            <ul class="nav nav-tabs pull-right">
                 <li class="active">
                     <a href="#structure" data-toggle="tab">Structure</a>
                 </li>
@@ -39,7 +30,6 @@
                     <a href="#overview" data-toggle="tab">Beats</a>
                 </li>
             </ul>
-            </div>
         </div>
 
         <!-- content visualization goes here -->
@@ -52,9 +42,14 @@
         
             <div id="overview" class="tab-pane">
                 <dl class="dl-horizontal row">
+
+                    <dt> Tempo </dt>
+                    <dd id="tempo" class="plot beats" />
+
                     <dt> Beats </dt>
                     <dd id="beats" class="plot beats" />
     
+
                     <dt> Loudness </dt>
                     <dd id="loudness" class="plot lines" />
     
@@ -82,6 +77,20 @@
             </div>
 
         </div>
+        
+        <div class="navbar navbar-fixed-bottom navbar-inverse">
+            <ul class="nav">
+                <li class="navbar-text"><strong><span id="track_title"></span></strong></li>
+                <li class="navbar-text"><span id="track_artist"></span></li>
+                <li class="navbar-text"><span id="track_album"></span></li>
+                <li class="navbar-text"><span id="track_date"></span></li>
+
+<!--                 <li class="navbar-text pull-right">Duration: <span id="duration"></span></li> -->
+<!--                 <li class="divider-vertical pull-right" /> -->
+<!--                 <li class="navbar-text pull-right">Tempo: <span id="tempo"></span></li> -->
+            </ul>
+
+        </div>
 
         <input type="hidden" id="song_id" value="{{ song_id }}" />
     </body>
@@ -89,6 +98,7 @@
     <script type="text/javascript" src="/static/js/jquery-1.10.1.min.js"></script>
     <script type="text/javascript" src="/static/js/d3.v3.min.js"></script>
     <script type="text/javascript" src="/static/bootstrap/js/bootstrap-tab.js"></script>
+    <script type="text/javascript" src="/static/bootstrap/js/bootstrap-dropdown.js"></script>
 
     <script type="text/javascript" src="/static/js/colorbrewer.js"></script>
     <script type="text/javascript" src="/static/js/analyzer.js"></script>

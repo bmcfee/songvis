@@ -39,14 +39,13 @@ def healthcheck():
 @app.route('/vis', defaults={'song_id': 0})
 @app.route('/vis/<int:song_id>')
 def songvis(song_id):
-    # get song_id from $get
-
     return flask.render_template('analysis.html', song_id=song_id)
+
 
 def retrieve_data(song_id=None):
 
     try:
-        with open('example.json', 'r') as f:
+        with open(app.config['data'] + os.path.sep + '%06d.json' % int(song_id), 'r') as f:
             D = json.load(f)
     except IOError:
         D = {}

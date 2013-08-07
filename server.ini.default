@@ -2,3 +2,5 @@
 root=.
 static=static
 debug=True
+index=index.json
+data=data/
