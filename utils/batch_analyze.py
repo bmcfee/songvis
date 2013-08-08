@@ -1,14 +1,26 @@
 #!/usr/bin/env python
 '''Usage: ./batch_analyzer index.json output_directory/ /path/to/file/glob/*.audio'''
 
+N_JOBS=4
 
 import sys
 import os
 import glob
 import ujson as json
 
+from joblib import Parallel, delayed
+
 import analyzer
 
+def process_file(output_directory, i, filename):
+
+    print '%6d:\t%s' % (i, filename)
+    data = analyzer.analyze_file(filename)
+    output = output_directory + os.path.sep + ('%06d.json' % i)
+    with open(output, 'w') as f_output:
+        json.dump(data, f_output)
+
+    return (i, {'data': output, 'meta': data['metadata'], 'audio': os.path.basename(filename)})
 
 if __name__ == '__main__':
     index_file          = sys.argv[1]
@@ -23,16 +35,8 @@ if __name__ == '__main__':
         index = {}
         start_index = 0
 
-    for (i, f) in enumerate(files, start_index):
-        print '%6d:\t%s' % (i, f)
-        data = analyzer.analyze_file(f)
-        output = output_directory + os.path.sep + ('%06d.json' % i)
-        with open(output, 'w') as f_output:
-            json.dump(data, f_output)
-
-        index['%06d' % i] = {   'data': output, 
-                                'meta': data['metadata'], 
-                                'audio': os.path.basename(f)}
+    for (i, results) in Parallel(n_jobs=N_JOBS)(delayed(process_file)(output_directory, *z) for z in enumerate(files, start_index)):
+        index['%06d' % i] = results
 
     with open(index_file, 'w') as f_idx:
         json.dump(index, f_idx)
