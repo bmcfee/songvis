@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 '''Usage: ./batch_analyzer index.json output_directory/ /path/to/file/glob/*.audio'''
 
-N_JOBS=4
+N_JOBS=2
 
 import sys
 import os
