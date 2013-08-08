@@ -4,20 +4,33 @@
         <meta charset="utf-8">
         <title>Song-visualizer</title>
         <link   rel="stylesheet"
-                href="/static/bootstrap/css/cosmo-bootstrap.min.css">
-
+                href="/static/bootstrap/css/bootstrap.min.css">
+        <link   rel="stylesheet"
+                href="/static/css/index.css">
     </head>
 
     <body>
-        <div class="hero-unit">
-            <h1>Song-visualizer</h1>
+        <div class="page-header">
+            <h1> Song visualization browser </h1>
         </div>
 
+            <div class="list-group" id="index-list">
+            </div>
+       
+        <div class="navbar navbar-fixed-bottom navbar-inverse">
+            <ul class="pager">
+                <li class="previous disabled"><a href="#" onclick="previous();">&larr; Previous</a></li>
+                <span class="navbar-text container" style="width: 50%">
+                Songs <span id="song-start"></span>&mdash;<span
+                id="song-end"></span> of <span id="song-total"></span>.
+                </span>
+                <li class="next disabled"><a href="#" onclick="next();">Next &rarr;</a>
+                </li>
+            </ul>
+        </div>
     </body>
 
-    <script type="text/javascript" src="http://www.google.com/jsapi"></script> 
-    <script type="text/javascript"> 
-        google.load("jquery", "1.7");
-    </script>
+    <script type="text/javascript" src="/static/js/jquery-1.10.1.min.js"></script>
+    <script type="text/javascript" src="/static/js/index.js"></script>
 
 </html>

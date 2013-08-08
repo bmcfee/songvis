@@ -82,7 +82,6 @@ def analyze_file(infile):
     A['beats'] = librosa.frames_to_time(beats, sr, hop_length=HOP).tolist()
 
     
-    A['spectrogram'] = librosa.logamplitude(librosa.feature.sync(S, beats)**2).T.tolist()
 
     # Let's make some beat-synchronous mfccs
     S = librosa.feature.mfcc(librosa.logamplitude(S), d=13)
@@ -118,6 +117,13 @@ def analyze_file(infile):
     links, segs = structure(np.array(A['timbres']).T[1:,:])
     A['links'] = links.tolist()
     A['segments'] = segs.tolist()
+
+    S = librosa.feature.melspectrogram(y, sr,   n_fft=1024, 
+                                                hop_length=HOP, 
+                                                n_mels=64, 
+                                                fmax=8000)
+    S = S / S.max()
+    A['spectrogram'] = librosa.logamplitude(librosa.feature.sync(S, beats)**2).T.tolist()
 
     return A
 

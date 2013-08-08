@@ -38,7 +38,7 @@
   shape-rendering: crispEdges;
 }
 
-/* body { padding-bottom: 70px; } */
+body { padding-bottom: 70px; overflow-x: hidden; }
 
 .plot       { width:    80%;        }
 .beats      { height:   32px;       }
